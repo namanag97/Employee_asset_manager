@@ -9,7 +9,6 @@ interface AppLayoutProps {
 }
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard' },
   { name: 'Assets', href: '/assets' },
   { name: 'Employees', href: '/employees' },
 ];

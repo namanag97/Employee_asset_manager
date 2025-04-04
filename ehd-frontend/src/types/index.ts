@@ -1,98 +1,68 @@
 // Hardware Asset Types
 export interface HardwareAsset {
-  id: string;
+  assetId: number;
+  assetTag: string;
   serialNumber: string;
+  typeId: number;
+  make: string;
   model: string;
-  manufacturer: string;
-  status: HardwareStatus;
-  assignedTo?: Employee;
-  purchaseDate: string;
-  warrantyEndDate: string;
+  specifications?: string;
+  status: string;
   notes?: string;
-  hardwareType: HardwareType;
-  currentAssignment?: AssignmentHistory;
-  assignmentHistory: AssignmentHistory[];
+  currentEmployeeId?: string;
+  lastAssignmentDate?: string;
   createdAt: string;
   updatedAt: string;
 }
 
-export type HardwareStatus = 'Available' | 'Assigned' | 'Maintenance' | 'Retired' | 'Damaged';
+export interface CreateAssetRequest {
+  assetTag: string;
+  serialNumber: string;
+  typeId: number;
+  make: string;
+  model: string;
+  specifications?: string;
+  status: string;
+  notes?: string;
+}
 
 // Hardware Type Types
 export interface HardwareType {
-  id: string;
-  name: string;
+  typeId: number;
+  typeName: string;
   description?: string;
-  category: HardwareCategory;
   createdAt: string;
   updatedAt: string;
-}
-
-export enum HardwareCategory {
-  LAPTOP = 'LAPTOP',
-  DESKTOP = 'DESKTOP',
-  MONITOR = 'MONITOR',
-  PERIPHERAL = 'PERIPHERAL',
-  NETWORK = 'NETWORK',
-  SERVER = 'SERVER',
-  OTHER = 'OTHER'
 }
 
 // Employee Types
 export interface Employee {
-  id: string;
-  firstName: string;
-  lastName: string;
+  employeeId: string;
+  fullName: string;
   email: string;
-  role: string;
-  department: string;
-  position: string;
-  location: string;
-  isActive: boolean;
-  currentAssets: HardwareAsset[];
-  assignmentHistory: AssignmentHistory[];
+  status: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CreateEmployeeRequest {
+  employeeId: string;
+  fullName: string;
+  email: string;
+  status: string;
 }
 
 // Assignment History Types
 export interface AssignmentHistory {
-  id: string;
-  hardwareAsset: HardwareAsset;
-  employee: Employee;
-  assignedDate: string;
-  returnedDate?: string;
+  historyId: number;
+  assetId: number;
+  employeeId: string;
+  employeeName: string;
+  assignmentDate: string;
+  returnDate?: string;
   notes?: string;
-  status: AssignmentStatus;
   createdAt: string;
   updatedAt: string;
-}
-
-export enum AssignmentStatus {
-  ACTIVE = 'ACTIVE',
-  RETURNED = 'RETURNED',
-  LOST = 'LOST',
-  DAMAGED = 'DAMAGED'
-}
-
-// User Types (for authentication)
-export interface User {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: UserRole;
-  department?: string;
-  isActive: boolean;
-  lastLogin?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export enum UserRole {
-  ADMIN = 'ADMIN',
-  MANAGER = 'MANAGER',
-  USER = 'USER'
 }
 
 // API Response Types
