@@ -11,7 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -45,7 +45,7 @@ class HardwareAssetServiceTest {
         availableAsset = new HardwareAsset();
         availableAsset.setAssetId(1L);
         availableAsset.setStatus("Available");
-        availableAsset.setUpdatedAt(LocalDateTime.now());
+        availableAsset.setUpdatedAt(Instant.now());
 
         employee = new Employee();
         employee.setEmployeeId("EMP001");
