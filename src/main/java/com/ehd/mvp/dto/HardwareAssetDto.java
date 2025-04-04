@@ -1,7 +1,8 @@
 package com.ehd.mvp.dto;
 
 import lombok.Data;
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.sql.Timestamp;
 
 @Data
 public class HardwareAssetDto {
@@ -15,7 +16,7 @@ public class HardwareAssetDto {
     private String status;
     private String notes;
     private String currentEmployeeId;
-    private Instant lastAssignmentDate;
-    private Instant createdAt;
-    private Instant updatedAt;
+    private Timestamp lastAssignmentDate;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 } 
