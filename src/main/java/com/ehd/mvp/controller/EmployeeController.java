@@ -2,11 +2,14 @@ package com.ehd.mvp.controller;
 
 import com.ehd.mvp.dto.CreateEmployeeRequest;
 import com.ehd.mvp.dto.EmployeeDto;
+import com.ehd.mvp.dto.HardwareAssetDto;
 import com.ehd.mvp.service.EmployeeService;
+import com.ehd.mvp.service.HardwareAssetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,6 +20,7 @@ import java.util.List;
 public class EmployeeController {
 
     private final EmployeeService employeeService;
+    private final HardwareAssetService hardwareAssetService;
 
     @GetMapping
     public ResponseEntity<List<EmployeeDto>> getAllEmployees() {
@@ -31,16 +35,24 @@ public class EmployeeController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EmployeeDto> createEmployee(@Valid @RequestBody CreateEmployeeRequest request) {
         EmployeeDto createdEmployee = employeeService.createEmployee(request);
         return new ResponseEntity<>(createdEmployee, HttpStatus.CREATED);
     }
 
     @PutMapping("/{employeeId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EmployeeDto> updateEmployee(
             @PathVariable String employeeId,
             @Valid @RequestBody CreateEmployeeRequest request) {
         EmployeeDto updatedEmployee = employeeService.updateEmployee(employeeId, request);
         return ResponseEntity.ok(updatedEmployee);
+    }
+
+    @GetMapping("/{employeeId}/assets")
+    public ResponseEntity<List<HardwareAssetDto>> getEmployeeAssets(@PathVariable String employeeId) {
+        List<HardwareAssetDto> assets = hardwareAssetService.findAssetsByEmployeeId(employeeId);
+        return ResponseEntity.ok(assets);
     }
 } 

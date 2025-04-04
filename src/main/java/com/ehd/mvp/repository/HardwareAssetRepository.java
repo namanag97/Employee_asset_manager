@@ -15,4 +15,6 @@ public interface HardwareAssetRepository extends JpaRepository<HardwareAsset, Lo
     
     List<HardwareAsset> findByAssetTagContainingIgnoreCaseOrSerialNumberContainingIgnoreCaseOrModelContainingIgnoreCase(
             String tag, String serial, String model);
+            
+    List<HardwareAsset> findByCurrentEmployeeEmployeeId(String employeeId);
 } 
