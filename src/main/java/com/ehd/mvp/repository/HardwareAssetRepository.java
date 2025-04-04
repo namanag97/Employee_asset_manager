@@ -13,6 +13,8 @@ public interface HardwareAssetRepository extends JpaRepository<HardwareAsset, Lo
     
     List<HardwareAsset> findByHardwareTypeTypeId(Integer typeId);
     
+    List<HardwareAsset> findByStatusAndHardwareTypeTypeId(String status, Integer typeId);
+    
     List<HardwareAsset> findByAssetTagContainingIgnoreCaseOrSerialNumberContainingIgnoreCaseOrModelContainingIgnoreCase(
             String tag, String serial, String model);
             

@@ -18,7 +18,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -75,8 +76,8 @@ public class HardwareAssetService {
         asset.setSpecifications(request.getSpecifications());
         asset.setStatus(request.getStatus());
         asset.setNotes(request.getNotes());
-        asset.setCreatedAt(Instant.now());
-        asset.setUpdatedAt(Instant.now());
+        asset.setCreatedAt(LocalDateTime.now());
+        asset.setUpdatedAt(LocalDateTime.now());
 
         HardwareAsset savedAsset = hardwareAssetRepository.save(asset);
         return convertToDto(savedAsset);
@@ -98,7 +99,7 @@ public class HardwareAssetService {
         asset.setSpecifications(request.getSpecifications());
         asset.setStatus(request.getStatus());
         asset.setNotes(request.getNotes());
-        asset.setUpdatedAt(Instant.now());
+        asset.setUpdatedAt(LocalDateTime.now());
 
         HardwareAsset updatedAsset = hardwareAssetRepository.save(asset);
         return convertToDto(updatedAsset);
@@ -123,17 +124,18 @@ public class HardwareAssetService {
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + assigningUserId));
 
         // Update asset status and assignment
+        LocalDateTime now = LocalDateTime.now();
         asset.setStatus("Assigned");
         asset.setCurrentEmployee(employee);
-        asset.setLastAssignmentDate(new java.sql.Timestamp(System.currentTimeMillis()));
-        asset.setUpdatedAt(java.time.LocalDateTime.now());
+        asset.setLastAssignmentDate(Timestamp.valueOf(now));
+        asset.setUpdatedAt(now);
 
         // Create assignment history record
         AssignmentHistory history = new AssignmentHistory();
         history.setAsset(asset);
         history.setEmployee(employee);
         history.setAssignedByUser(assigningUser);
-        history.setAssignmentDate(new java.sql.Timestamp(System.currentTimeMillis()));
+        history.setAssignmentDate(Timestamp.valueOf(now));
 
         // Save changes
         hardwareAssetRepository.save(asset);
@@ -163,13 +165,14 @@ public class HardwareAssetService {
                 .orElseThrow(() -> new IllegalStateException("No assignment history found for asset: " + assetId));
 
         // Update asset status and clear assignment
+        LocalDateTime now = LocalDateTime.now();
         asset.setStatus(newStatus);
         asset.setCurrentEmployee(null);
         asset.setLastAssignmentDate(null);
-        asset.setUpdatedAt(java.time.LocalDateTime.now());
+        asset.setUpdatedAt(now);
 
         // Update assignment history
-        latestHistory.setReturnDate(new java.sql.Timestamp(System.currentTimeMillis()));
+        latestHistory.setReturnDate(Timestamp.valueOf(now));
         latestHistory.setReturnedByUser(returningUser);
 
         // Save changes
@@ -225,10 +228,8 @@ public class HardwareAssetService {
             dto.setAssignedByUsername(history.getAssignedByUser().getUsername());
         }
         
-        dto.setAssignmentDate(history.getAssignmentDate() != null ? 
-                history.getAssignmentDate().toInstant() : null);
-        dto.setReturnDate(history.getReturnDate() != null ? 
-                history.getReturnDate().toInstant() : null);
+        dto.setAssignmentDate(history.getAssignmentDate());
+        dto.setReturnDate(history.getReturnDate());
         
         if (history.getReturnedByUser() != null) {
             dto.setReturnedByUserId(history.getReturnedByUser().getUserId());
@@ -236,10 +237,8 @@ public class HardwareAssetService {
         }
         
         dto.setNotes(history.getNotes());
-        dto.setCreatedAt(history.getCreatedAt() != null ? 
-                history.getCreatedAt().toInstant() : null);
-        dto.setUpdatedAt(history.getUpdatedAt() != null ? 
-                history.getUpdatedAt().toInstant() : null);
+        dto.setCreatedAt(history.getCreatedAt());
+        dto.setUpdatedAt(history.getUpdatedAt());
         
         return dto;
     }
