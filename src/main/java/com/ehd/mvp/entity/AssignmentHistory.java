@@ -38,14 +38,6 @@ public class AssignmentHistory {
     @JoinColumn(name = "employee_id", nullable = false)
     private Employee employee;
     
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assigned_by_user_id")
-    private AppUser assignedByUser;
-    
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "returned_by_user_id")
-    private AppUser returnedByUser;
-    
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

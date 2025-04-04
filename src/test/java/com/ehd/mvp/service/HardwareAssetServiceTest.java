@@ -10,7 +10,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.sql.Timestamp;
 import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,9 +26,6 @@ class HardwareAssetServiceTest {
     private EmployeeRepository employeeRepository;
 
     @Mock
-    private AppUserRepository appUserRepository;
-
-    @Mock
     private AssignmentHistoryRepository assignmentHistoryRepository;
 
     @InjectMocks
@@ -37,7 +33,6 @@ class HardwareAssetServiceTest {
 
     private HardwareAsset availableAsset;
     private Employee employee;
-    private AppUser assigningUser;
 
     @BeforeEach
     void setUp() {
@@ -61,12 +56,6 @@ class HardwareAssetServiceTest {
         employee.setFullName("John Doe");
         employee.setEmail("john.doe@example.com");
         employee.setStatus("Active");
-
-        assigningUser = new AppUser();
-        assigningUser.setUserId(1L);
-        assigningUser.setUsername("admin");
-        assigningUser.setEmail("admin@example.com");
-        assigningUser.setRole("ADMIN");
     }
 
     @Test
@@ -74,12 +63,11 @@ class HardwareAssetServiceTest {
         // Arrange
         when(hardwareAssetRepository.findById(1L)).thenReturn(java.util.Optional.of(availableAsset));
         when(employeeRepository.findById("EMP001")).thenReturn(java.util.Optional.of(employee));
-        when(appUserRepository.findById(1L)).thenReturn(java.util.Optional.of(assigningUser));
         when(hardwareAssetRepository.save(any(HardwareAsset.class))).thenReturn(availableAsset);
         when(assignmentHistoryRepository.save(any(AssignmentHistory.class))).thenReturn(new AssignmentHistory());
 
         // Act
-        var result = hardwareAssetService.assignAsset(1L, "EMP001", 1L);
+        var result = hardwareAssetService.assignAsset(1L, "EMP001");
 
         // Assert
         assertNotNull(result);
@@ -90,7 +78,6 @@ class HardwareAssetServiceTest {
         // Verify repository interactions
         verify(hardwareAssetRepository).findById(1L);
         verify(employeeRepository).findById("EMP001");
-        verify(appUserRepository).findById(1L);
         verify(hardwareAssetRepository).save(availableAsset);
         verify(assignmentHistoryRepository).save(any(AssignmentHistory.class));
     }
@@ -102,11 +89,11 @@ class HardwareAssetServiceTest {
 
         // Act & Assert
         assertThrows(EntityNotFoundException.class, () -> {
-            hardwareAssetService.assignAsset(1L, "EMP001", 1L);
+            hardwareAssetService.assignAsset(1L, "EMP001");
         });
 
         verify(hardwareAssetRepository).findById(1L);
-        verifyNoMoreInteractions(hardwareAssetRepository, employeeRepository, appUserRepository, assignmentHistoryRepository);
+        verifyNoMoreInteractions(hardwareAssetRepository, employeeRepository, assignmentHistoryRepository);
     }
 
     @Test
@@ -117,30 +104,12 @@ class HardwareAssetServiceTest {
 
         // Act & Assert
         assertThrows(EntityNotFoundException.class, () -> {
-            hardwareAssetService.assignAsset(1L, "EMP001", 1L);
+            hardwareAssetService.assignAsset(1L, "EMP001");
         });
 
         verify(hardwareAssetRepository).findById(1L);
         verify(employeeRepository).findById("EMP001");
-        verifyNoMoreInteractions(hardwareAssetRepository, employeeRepository, appUserRepository, assignmentHistoryRepository);
-    }
-
-    @Test
-    void assignAsset_UserNotFound() {
-        // Arrange
-        when(hardwareAssetRepository.findById(1L)).thenReturn(java.util.Optional.of(availableAsset));
-        when(employeeRepository.findById("EMP001")).thenReturn(java.util.Optional.of(employee));
-        when(appUserRepository.findById(1L)).thenReturn(java.util.Optional.empty());
-
-        // Act & Assert
-        assertThrows(EntityNotFoundException.class, () -> {
-            hardwareAssetService.assignAsset(1L, "EMP001", 1L);
-        });
-
-        verify(hardwareAssetRepository).findById(1L);
-        verify(employeeRepository).findById("EMP001");
-        verify(appUserRepository).findById(1L);
-        verifyNoMoreInteractions(hardwareAssetRepository, employeeRepository, appUserRepository, assignmentHistoryRepository);
+        verifyNoMoreInteractions(hardwareAssetRepository, employeeRepository, assignmentHistoryRepository);
     }
 
     @Test
@@ -151,10 +120,10 @@ class HardwareAssetServiceTest {
 
         // Act & Assert
         assertThrows(IllegalStateException.class, () -> {
-            hardwareAssetService.assignAsset(1L, "EMP001", 1L);
+            hardwareAssetService.assignAsset(1L, "EMP001");
         });
 
         verify(hardwareAssetRepository).findById(1L);
-        verifyNoMoreInteractions(hardwareAssetRepository, employeeRepository, appUserRepository, assignmentHistoryRepository);
+        verifyNoMoreInteractions(hardwareAssetRepository, employeeRepository, assignmentHistoryRepository);
     }
 } 

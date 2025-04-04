@@ -10,7 +10,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,14 +37,12 @@ public class HardwareAssetController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<HardwareAssetDto> createAsset(@Valid @RequestBody CreateAssetRequest request) {
         HardwareAssetDto createdAsset = hardwareAssetService.createAsset(request);
         return new ResponseEntity<>(createdAsset, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<HardwareAssetDto> updateAsset(
             @PathVariable Long id,
             @Valid @RequestBody CreateAssetRequest request) {
@@ -54,33 +51,23 @@ public class HardwareAssetController {
     }
 
     @PostMapping("/{assetId}/assign")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<HardwareAssetDto> assignAsset(
             @PathVariable Long assetId,
             @Valid @RequestBody AssignAssetRequest request) {
-        // TODO: Replace with actual user ID from authentication
-        Long currentUserId = 1L; // Temporary hardcoded value
-        
         HardwareAssetDto assignedAsset = hardwareAssetService.assignAsset(
                 assetId, 
-                request.getEmployeeId(),
-                currentUserId);
+                request.getEmployeeId());
         
         return ResponseEntity.ok(assignedAsset);
     }
 
     @PostMapping("/{assetId}/return")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<HardwareAssetDto> returnAsset(
             @PathVariable Long assetId,
             @Valid @RequestBody ReturnAssetRequest request) {
-        // TODO: Replace with actual user ID from authentication
-        Long currentUserId = 1L; // Temporary hardcoded value
-        
         HardwareAssetDto returnedAsset = hardwareAssetService.returnAsset(
                 assetId,
-                request.getReturnStatus(),
-                currentUserId);
+                request.getReturnStatus());
         
         return ResponseEntity.ok(returnedAsset);
     }

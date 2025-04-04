@@ -6,12 +6,10 @@ import com.ehd.mvp.dto.AssignmentHistoryDto;
 import com.ehd.mvp.entity.HardwareAsset;
 import com.ehd.mvp.entity.HardwareType;
 import com.ehd.mvp.entity.Employee;
-import com.ehd.mvp.entity.AppUser;
 import com.ehd.mvp.entity.AssignmentHistory;
 import com.ehd.mvp.repository.HardwareAssetRepository;
 import com.ehd.mvp.repository.HardwareTypeRepository;
 import com.ehd.mvp.repository.EmployeeRepository;
-import com.ehd.mvp.repository.AppUserRepository;
 import com.ehd.mvp.repository.AssignmentHistoryRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +27,6 @@ public class HardwareAssetService {
     private final HardwareAssetRepository hardwareAssetRepository;
     private final HardwareTypeRepository hardwareTypeRepository;
     private final EmployeeRepository employeeRepository;
-    private final AppUserRepository appUserRepository;
     private final AssignmentHistoryRepository assignmentHistoryRepository;
 
     @Transactional(readOnly = true)
@@ -112,7 +109,7 @@ public class HardwareAssetService {
     }
 
     @Transactional
-    public HardwareAssetDto assignAsset(Long assetId, String employeeId, Long assigningUserId) {
+    public HardwareAssetDto assignAsset(Long assetId, String employeeId) {
         HardwareAsset asset = hardwareAssetRepository.findById(assetId)
                 .orElseThrow(() -> new EntityNotFoundException("Hardware asset not found with id: " + assetId));
 
@@ -124,9 +121,6 @@ public class HardwareAssetService {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new EntityNotFoundException("Employee not found with id: " + employeeId));
 
-        AppUser assigningUser = appUserRepository.findById(assigningUserId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + assigningUserId));
-
         // Update asset status and assignment
         Instant now = Instant.now();
         asset.setStatus("Assigned");
@@ -137,7 +131,6 @@ public class HardwareAssetService {
         AssignmentHistory history = new AssignmentHistory();
         history.setAsset(asset);
         history.setEmployee(employee);
-        history.setAssignedByUser(assigningUser);
         history.setAssignmentDate(now);
         // createdAt and updatedAt will be set automatically by @CreationTimestamp and @UpdateTimestamp
 
@@ -147,12 +140,9 @@ public class HardwareAssetService {
     }
 
     @Transactional
-    public HardwareAssetDto returnAsset(Long assetId, String newStatus, Long returningUserId) {
+    public HardwareAssetDto returnAsset(Long assetId, String newStatus) {
         HardwareAsset asset = hardwareAssetRepository.findById(assetId)
                 .orElseThrow(() -> new EntityNotFoundException("Hardware asset not found with id: " + assetId));
-
-        AppUser returningUser = appUserRepository.findById(returningUserId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + returningUserId));
 
         AssignmentHistory latestHistory = assignmentHistoryRepository.findByAssetAssetIdOrderByAssignmentDateDesc(assetId)
                 .stream()
@@ -168,7 +158,6 @@ public class HardwareAssetService {
 
         // Update assignment history
         latestHistory.setReturnDate(now);
-        latestHistory.setReturnedByUser(returningUser);
         // updatedAt will be set automatically by @UpdateTimestamp
 
         assignmentHistoryRepository.save(latestHistory);
@@ -216,20 +205,8 @@ public class HardwareAssetService {
         dto.setAssetId(history.getAsset().getAssetId());
         dto.setEmployeeId(history.getEmployee().getEmployeeId());
         dto.setEmployeeName(history.getEmployee().getFullName());
-        
-        if (history.getAssignedByUser() != null) {
-            dto.setAssignedByUserId(history.getAssignedByUser().getUserId());
-            dto.setAssignedByUsername(history.getAssignedByUser().getUsername());
-        }
-        
         dto.setAssignmentDate(history.getAssignmentDate());
         dto.setReturnDate(history.getReturnDate());
-        
-        if (history.getReturnedByUser() != null) {
-            dto.setReturnedByUserId(history.getReturnedByUser().getUserId());
-            dto.setReturnedByUsername(history.getReturnedByUser().getUsername());
-        }
-        
         dto.setNotes(history.getNotes());
         dto.setCreatedAt(history.getCreatedAt());
         dto.setUpdatedAt(history.getUpdatedAt());

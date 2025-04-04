@@ -30,7 +30,6 @@ services:
       DB_URL: jdbc:postgresql://database:5432/ehd_db
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
-      JWT_SECRET: your-secret-key-change-this-in-production
     ports:
       - "8080:8080"
     restart: unless-stopped
