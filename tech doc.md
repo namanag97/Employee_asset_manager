@@ -185,7 +185,7 @@ CREATE TABLE employees (
 -- Hardware Types (Lookup)
 CREATE TABLE hardware_types (
     type_id SERIAL PRIMARY KEY,
-    type_name VARCHAR(100) UNIQUE NOT NULL -- e.g., Laptop, Monitor
+    type_name VARCHAR(255) NOT NULL UNIQUE
 );
 
 -- Hardware Assets
