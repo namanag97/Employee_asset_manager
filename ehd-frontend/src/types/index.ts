@@ -4,30 +4,25 @@ export interface HardwareAsset {
   serialNumber: string;
   model: string;
   manufacturer: string;
+  status: HardwareStatus;
+  assignedTo?: Employee;
   purchaseDate: string;
   warrantyEndDate: string;
-  status: HardwareStatus;
+  notes?: string;
   hardwareType: HardwareType;
   currentAssignment?: AssignmentHistory;
   assignmentHistory: AssignmentHistory[];
-  notes?: string;
   createdAt: string;
   updatedAt: string;
 }
 
-export enum HardwareStatus {
-  AVAILABLE = 'AVAILABLE',
-  ASSIGNED = 'ASSIGNED',
-  MAINTENANCE = 'MAINTENANCE',
-  RETIRED = 'RETIRED',
-  LOST = 'LOST'
-}
+export type HardwareStatus = 'Available' | 'Assigned' | 'Maintenance' | 'Retired' | 'Damaged';
 
 // Hardware Type Types
 export interface HardwareType {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   category: HardwareCategory;
   createdAt: string;
   updatedAt: string;
@@ -46,10 +41,10 @@ export enum HardwareCategory {
 // Employee Types
 export interface Employee {
   id: string;
-  employeeId: string;
   firstName: string;
   lastName: string;
   email: string;
+  role: string;
   department: string;
   position: string;
   location: string;
