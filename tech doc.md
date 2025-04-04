@@ -604,3 +604,136 @@ Prompt: (Optional) "Add basic unit tests for a key service method in the backend
 Prompt: (Optional) "Add a basic component test for the AssetForm component in the frontend using React Testing Library. Check that form fields render and basic input changes work."
 
 Remember to test the application end-to-end frequently throughout this process. Good luck!
+
+
+Okay, let's continue the prompt chain, focusing on more comprehensive testing and deployment preparation for the EHD MVP.
+
+Phase 7: Backend Integration & API Testing
+
+Prompt: "In the Spring Boot backend project (ehd-backend), add the spring-boot-starter-test dependency (if not already present) and H2 database dependency with runtime scope in pom.xml/build.gradle. Create a test properties file src/test/resources/application-test.properties that overrides the main properties to use the H2 in-memory database (spring.datasource.url=jdbc:h2:mem:ehd_testdb;DB_CLOSE_DELAY=-1, spring.jpa.hibernate.ddl-auto=create-drop)."
+
+Review: Check pom.xml/build.gradle for dependencies. Verify the application-test.properties file exists and contains H2 configuration.
+
+Prompt: "Create an integration test class for HardwareAssetController in src/test/java/com/ehd/mvp/controller/HardwareAssetControllerIT.java. Annotate it with @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT) and @ActiveProfiles("test"). Inject TestRestTemplate and potentially the repositories (HardwareAssetRepository, EmployeeRepository, etc.) if needed for setup/assertions. Write a test method (e.g., testCreateAndGetAsset) that:
+
+Uses TestRestTemplate to POST a valid CreateAssetRequest to /api/v1/assets.
+
+Asserts the HTTP response status is 201 (Created).
+
+Asserts the response body contains the created asset details.
+
+Extracts the ID from the response.
+
+Uses TestRestTemplate to GET /api/v1/assets/{id} using the extracted ID.
+
+Asserts the status is 200 (OK) and the response body matches the expected asset details."
+
+Review: Check annotations, injection, test logic (POST then GET), assertions on status and body. Note: This test currently runs without security. We'll add security context later if needed.
+
+Prompt: "Write another integration test method in HardwareAssetControllerIT.java (e.g., testGetAssets_WithFilter) that:
+
+Potentially uses repositories to pre-populate the H2 database with a few test assets having different statuses or types.
+
+Uses TestRestTemplate to GET /api/v1/assets?status=Available.
+
+Asserts the status is 200 and the returned list only contains assets with the 'Available' status."
+
+Review: Check test setup (data population), API call with query parameters, assertions on the filtered list.
+
+Prompt: (Optional but Recommended) "Refactor the integration tests in HardwareAssetControllerIT.java to handle authentication.
+
+Add a setup method (@BeforeEach) or a helper method that performs a login via TestRestTemplate to /api/v1/auth/login (using a pre-configured test user added via @Sql script or repository).
+
+Extract the JWT token from the login response.
+
+Modify subsequent TestRestTemplate calls (POST, PUT, GET protected endpoints) to include the Authorization: Bearer <token> header."
+
+Review: Check test user setup, login logic, token extraction, and header addition in subsequent requests.
+
+Phase 8: Frontend E2E Testing Setup (Cypress)
+
+Prompt: "In the Next.js frontend project (ehd-frontend), install Cypress: npm install -D cypress (or yarn/pnpm/bun). Initialize Cypress: npx cypress open. This will create configuration files and example tests."
+
+Review: Check package.json for Cypress dependency. Verify cypress.config.ts and the cypress/ directory are created.
+
+Prompt: "Configure Cypress in cypress.config.ts. Set the baseUrl to the address where the frontend runs during testing (e.g., http://localhost:3000)."
+
+Review: Check the baseUrl setting in cypress.config.ts.
+
+Prompt: "Create a Cypress custom command for logging in. In cypress/support/commands.ts, add a command like Cypress.Commands.add('login', (username, password) => { ... }). This command should:
+
+Visit the /login page (cy.visit('/login')).
+
+Get the username and password input fields (cy.get(...)).
+
+Type the provided username and password (.type(...)).
+
+Click the login button (cy.get(...).click()).
+
+Assert that the URL changes (e.g., to /assets or /dashboard) or that a specific element on the dashboard page is visible, confirming successful login."
+
+Review: Check the command implementation, selectors used, and assertions.
+
+Prompt: "Write a basic E2E test file cypress/e2e/assets.cy.ts. Create a test suite (describe) for asset management. Add a beforeEach hook that calls the custom cy.login('testadmin', 'password') command (assuming you have a test user). Write a test case (it) 'should display the assets list' that:
+
+Visits the /assets page (cy.visit('/assets')).
+
+Asserts that the main assets table (cy.get('table') or a more specific selector) is visible.
+
+Asserts that text indicating loading is gone and at least one row of data is present (if applicable)."
+
+Review: Check test file structure, beforeEach hook usage, selectors, and basic assertions for page load.
+
+Phase 9: Deployment Preparation (Docker)
+
+Prompt: "In the Spring Boot backend project (ehd-backend), create a Dockerfile. Use a multi-stage build:
+
+Stage 1 (Build): Use a Maven or Gradle image (e.g., maven:3.8-openjdk-17 or gradle:7-jdk17) as builder. Copy source code. Run mvn package -DskipTests (or ./gradlew build -x test) to build the JAR file.
+
+Stage 2 (Runtime): Use a minimal JRE image (e.g., eclipse-temurin:17-jre-alpine). Copy the JAR file built in Stage 1. Expose the application port (e.g., 8080). Set the ENTRYPOINT or CMD to run the JAR (java -jar /app.jar). Ensure environment variables for DB connection and JWT secret can be passed in."
+
+Review: Check base images, build commands, JAR copying, exposed port, entry point, and potential for environment variable configuration.
+
+Prompt: "In the Next.js frontend project (ehd-frontend), create a Dockerfile. Use a multi-stage build:
+
+Stage 1 (Build): Use a Node.js image (e.g., node:18-alpine) as builder. Set WORKDIR. Copy package.json and lock files, run npm install (or yarn/pnpm/bun). Copy the rest of the source code. Run npm run build.
+
+Stage 2 (Runtime): Use a lightweight Node.js image (e.g., node:18-alpine). Copy package.json, next.config.js, the .next (standalone output) directory, and the public directory from the build stage. Expose the Next.js port (default 3000). Set the CMD to ["node", "server.js"] (for default Next.js server) or the appropriate command if using standalone output."
+
+Note: For production, configure Next.js for standalone output (output: 'standalone' in next.config.js) for smaller Docker images. The Dockerfile needs adjustment for this. Let's start without standalone first for simplicity.
+
+Review: Check base images, dependency installation, build command, copying build artifacts (.next, public, package.json), exposed port, and run command.
+
+Prompt: "Create a docker-compose.yml file in the root directory of your workspace (or a parent directory containing both backend and frontend). Define services for:
+
+database: Use the official postgres:14-alpine image. Set environment variables for POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB. Map a volume for data persistence (pg_data:/var/lib/postgresql/data). Expose port 5432.
+
+backend: Build using the backend Dockerfile (context: ./ehd-backend). Depend on database. Map port 8080:8080. Pass environment variables for DB_URL (pointing to jdbc:postgresql://database:5432/ehd_db), DB_USERNAME, DB_PASSWORD, and JWT_SECRET.
+
+frontend: Build using the frontend Dockerfile (context: ./ehd-frontend). Depend on backend. Map port 3000:3000. Pass environment variables if needed (like NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1 if not already hardcoded or handled via proxy)."
+
+Review: Check service definitions, image sources, build contexts, dependencies (depends_on), port mappings, environment variable passing, volume mapping for DB.
+
+Phase 10: Basic CI/CD Setup (GitHub Actions Example)
+
+Prompt: "Create a basic GitHub Actions workflow file .github/workflows/ci.yml. Define a workflow that triggers on push to the main branch. Include jobs for:
+
+build-backend: Runs on ubuntu-latest. Checks out code. Sets up JDK 17. Runs backend tests (mvn test or ./gradlew test). Builds the backend JAR (mvn package -DskipTests or ./gradlew build -x test). (Optional: Upload JAR as artifact).
+
+build-frontend: Runs on ubuntu-latest. Checks out code. Sets up Node.js (e.g., 18.x). Installs frontend dependencies (npm ci). Runs linter (npm run lint). Runs frontend build (npm run build). (Optional: Run Cypress tests if backend can be mocked or served).
+
+(Deployment steps would be added later, e.g., build/push Docker images, deploy to hosting provider)."
+
+Review: Check workflow trigger, job definitions, setup steps (JDK, Node), test commands, build commands. This is a basic CI setup, not full CD yet.
+
+Next Steps (Beyond this Chain):
+
+Deployment: Choose a hosting provider (Render, Fly.io, AWS Elastic Beanstalk, Google Cloud Run, Azure App Service) and adapt the CI/CD workflow to build Docker images, push them to a registry (Docker Hub, ECR, GCR, GHCR), and deploy them to the chosen provider, injecting production secrets/environment variables.
+
+Database Migration: Use Flyway or Liquibase in the backend project to manage database schema changes reliably across environments instead of relying on ddl-auto=update.
+
+Advanced Testing: Write more comprehensive E2E tests covering core user flows (creating assets, assigning, returning). Add backend tests for security rules.
+
+Monitoring & Logging: Integrate logging frameworks and potentially monitoring tools (e.g., Prometheus/Grafana, Datadog) for production.
+
+This extended chain provides steps for testing and preparing for deployment. Remember to review and correct the AI's output at each stage.

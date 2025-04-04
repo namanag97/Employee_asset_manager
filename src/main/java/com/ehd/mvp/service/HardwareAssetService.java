@@ -37,17 +37,25 @@ public class HardwareAssetService {
     public List<HardwareAssetDto> findAllAssets(String status, Integer typeId, String search) {
         List<HardwareAsset> assets;
         
-        if (status != null && typeId != null) {
-            assets = hardwareAssetRepository.findByStatusAndHardwareTypeTypeId(status, typeId);
-        } else if (status != null) {
-            assets = hardwareAssetRepository.findByStatus(status);
-        } else if (typeId != null) {
-            assets = hardwareAssetRepository.findByHardwareTypeTypeId(typeId);
-        } else if (search != null) {
+        // Start with the most specific filter if provided
+        if (search != null) {
             assets = hardwareAssetRepository.findByAssetTagContainingIgnoreCaseOrSerialNumberContainingIgnoreCaseOrModelContainingIgnoreCase(
                     search, search, search);
         } else {
             assets = hardwareAssetRepository.findAll();
+        }
+        
+        // Apply additional filters in memory
+        if (status != null) {
+            assets = assets.stream()
+                    .filter(asset -> asset.getStatus().equals(status))
+                    .collect(Collectors.toList());
+        }
+        
+        if (typeId != null) {
+            assets = assets.stream()
+                    .filter(asset -> asset.getHardwareType().getTypeId().equals(typeId))
+                    .collect(Collectors.toList());
         }
         
         return assets.stream()
@@ -107,19 +115,12 @@ public class HardwareAssetService {
 
     @Transactional
     public HardwareAssetDto assignAsset(Long assetId, String employeeId, Long assigningUserId) {
-        // Find the asset and verify it's available
         HardwareAsset asset = hardwareAssetRepository.findById(assetId)
                 .orElseThrow(() -> new EntityNotFoundException("Hardware asset not found with id: " + assetId));
-        
-        if (!"Available".equals(asset.getStatus())) {
-            throw new IllegalStateException("Asset must be in 'Available' status to be assigned");
-        }
 
-        // Find the employee
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new EntityNotFoundException("Employee not found with id: " + employeeId));
 
-        // Find the assigning user
         AppUser assigningUser = appUserRepository.findById(assigningUserId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + assigningUserId));
 
@@ -130,39 +131,33 @@ public class HardwareAssetService {
         asset.setLastAssignmentDate(Timestamp.valueOf(now));
         asset.setUpdatedAt(now);
 
-        // Create assignment history record
         AssignmentHistory history = new AssignmentHistory();
         history.setAsset(asset);
         history.setEmployee(employee);
         history.setAssignedByUser(assigningUser);
         history.setAssignmentDate(Timestamp.valueOf(now));
 
-        // Save changes
-        hardwareAssetRepository.save(asset);
         assignmentHistoryRepository.save(history);
-
-        return convertToDto(asset);
+        HardwareAsset updatedAsset = hardwareAssetRepository.save(asset);
+        return convertToDto(updatedAsset);
     }
 
     @Transactional
     public HardwareAssetDto returnAsset(Long assetId, String newStatus, Long returningUserId) {
-        // Find the asset and verify it's assigned
         HardwareAsset asset = hardwareAssetRepository.findById(assetId)
                 .orElseThrow(() -> new EntityNotFoundException("Hardware asset not found with id: " + assetId));
-        
-        if (!"Assigned".equals(asset.getStatus())) {
-            throw new IllegalStateException("Asset must be in 'Assigned' status to be returned");
-        }
 
-        // Find the returning user
         AppUser returningUser = appUserRepository.findById(returningUserId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + returningUserId));
 
-        // Find the latest assignment history record
+        asset.setStatus(newStatus);
+        asset.setCurrentEmployee(null);
+        asset.setLastAssignmentDate(null);
+
         AssignmentHistory latestHistory = assignmentHistoryRepository.findByAssetAssetIdOrderByAssignmentDateDesc(assetId)
                 .stream()
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No assignment history found for asset: " + assetId));
+                .orElseThrow(() -> new EntityNotFoundException("No assignment history found for asset: " + assetId));
 
         // Update asset status and clear assignment
         LocalDateTime now = LocalDateTime.now();
@@ -175,11 +170,9 @@ public class HardwareAssetService {
         latestHistory.setReturnDate(Timestamp.valueOf(now));
         latestHistory.setReturnedByUser(returningUser);
 
-        // Save changes
-        hardwareAssetRepository.save(asset);
         assignmentHistoryRepository.save(latestHistory);
-
-        return convertToDto(asset);
+        HardwareAsset updatedAsset = hardwareAssetRepository.save(asset);
+        return convertToDto(updatedAsset);
     }
 
     @Transactional(readOnly = true)
