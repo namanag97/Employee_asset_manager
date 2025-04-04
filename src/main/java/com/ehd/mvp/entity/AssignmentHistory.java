@@ -7,8 +7,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDateTime;
-import java.sql.Timestamp;
+import java.time.Instant;
 
 @Entity
 @Table(name = "assignment_history")
@@ -23,10 +22,10 @@ public class AssignmentHistory {
     private Long historyId;
     
     @Column(name = "assignment_date", nullable = false)
-    private Timestamp assignmentDate;
+    private Instant assignmentDate;
     
     @Column(name = "return_date")
-    private Timestamp returnDate;
+    private Instant returnDate;
     
     @Column(name = "notes")
     private String notes;
@@ -49,9 +48,9 @@ public class AssignmentHistory {
     
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
     
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 } 

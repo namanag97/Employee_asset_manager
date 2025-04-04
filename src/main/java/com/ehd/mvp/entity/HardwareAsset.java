@@ -7,8 +7,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDateTime;
-import java.sql.Timestamp;
+import java.time.Instant;
 
 @Entity
 @Table(name = "hardware_assets")
@@ -44,7 +43,7 @@ public class HardwareAsset {
     private String notes;
     
     @Column(name = "last_assignment_date")
-    private Timestamp lastAssignmentDate;
+    private Instant lastAssignmentDate;
     
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "hardware_type_id", nullable = false)
@@ -56,9 +55,9 @@ public class HardwareAsset {
     
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
     
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 } 

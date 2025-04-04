@@ -36,17 +36,25 @@ public class HardwareAssetService {
     public List<HardwareAssetDto> findAllAssets(String status, Integer typeId, String search) {
         List<HardwareAsset> assets;
         
-        if (status != null && typeId != null) {
-            assets = hardwareAssetRepository.findByStatusAndHardwareTypeTypeId(status, typeId);
-        } else if (status != null) {
-            assets = hardwareAssetRepository.findByStatus(status);
-        } else if (typeId != null) {
-            assets = hardwareAssetRepository.findByHardwareTypeTypeId(typeId);
-        } else if (search != null) {
+        // Start with the most specific filter if provided
+        if (search != null) {
             assets = hardwareAssetRepository.findByAssetTagContainingIgnoreCaseOrSerialNumberContainingIgnoreCaseOrModelContainingIgnoreCase(
                     search, search, search);
         } else {
             assets = hardwareAssetRepository.findAll();
+        }
+        
+        // Apply additional filters in memory
+        if (status != null) {
+            assets = assets.stream()
+                    .filter(asset -> asset.getStatus().equals(status))
+                    .collect(Collectors.toList());
+        }
+        
+        if (typeId != null) {
+            assets = assets.stream()
+                    .filter(asset -> asset.getHardwareType().getTypeId().equals(typeId))
+                    .collect(Collectors.toList());
         }
         
         return assets.stream()
@@ -75,8 +83,6 @@ public class HardwareAssetService {
         asset.setSpecifications(request.getSpecifications());
         asset.setStatus(request.getStatus());
         asset.setNotes(request.getNotes());
-        asset.setCreatedAt(Instant.now());
-        asset.setUpdatedAt(Instant.now());
 
         HardwareAsset savedAsset = hardwareAssetRepository.save(asset);
         return convertToDto(savedAsset);
@@ -98,7 +104,6 @@ public class HardwareAssetService {
         asset.setSpecifications(request.getSpecifications());
         asset.setStatus(request.getStatus());
         asset.setNotes(request.getNotes());
-        asset.setUpdatedAt(Instant.now());
 
         HardwareAsset updatedAsset = hardwareAssetRepository.save(asset);
         return convertToDto(updatedAsset);
@@ -106,77 +111,53 @@ public class HardwareAssetService {
 
     @Transactional
     public HardwareAssetDto assignAsset(Long assetId, String employeeId, Long assigningUserId) {
-        // Find the asset and verify it's available
         HardwareAsset asset = hardwareAssetRepository.findById(assetId)
                 .orElseThrow(() -> new EntityNotFoundException("Hardware asset not found with id: " + assetId));
-        
-        if (!"Available".equals(asset.getStatus())) {
-            throw new IllegalStateException("Asset must be in 'Available' status to be assigned");
-        }
 
-        // Find the employee
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new EntityNotFoundException("Employee not found with id: " + employeeId));
 
-        // Find the assigning user
         AppUser assigningUser = appUserRepository.findById(assigningUserId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + assigningUserId));
 
-        // Update asset status and assignment
         asset.setStatus("Assigned");
         asset.setCurrentEmployee(employee);
-        asset.setLastAssignmentDate(new java.sql.Timestamp(System.currentTimeMillis()));
-        asset.setUpdatedAt(java.time.LocalDateTime.now());
+        asset.setLastAssignmentDate(Instant.now());
 
-        // Create assignment history record
         AssignmentHistory history = new AssignmentHistory();
         history.setAsset(asset);
         history.setEmployee(employee);
         history.setAssignedByUser(assigningUser);
-        history.setAssignmentDate(new java.sql.Timestamp(System.currentTimeMillis()));
+        history.setAssignmentDate(Instant.now());
 
-        // Save changes
-        hardwareAssetRepository.save(asset);
         assignmentHistoryRepository.save(history);
-
-        return convertToDto(asset);
+        HardwareAsset updatedAsset = hardwareAssetRepository.save(asset);
+        return convertToDto(updatedAsset);
     }
 
     @Transactional
     public HardwareAssetDto returnAsset(Long assetId, String newStatus, Long returningUserId) {
-        // Find the asset and verify it's assigned
         HardwareAsset asset = hardwareAssetRepository.findById(assetId)
                 .orElseThrow(() -> new EntityNotFoundException("Hardware asset not found with id: " + assetId));
-        
-        if (!"Assigned".equals(asset.getStatus())) {
-            throw new IllegalStateException("Asset must be in 'Assigned' status to be returned");
-        }
 
-        // Find the returning user
         AppUser returningUser = appUserRepository.findById(returningUserId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + returningUserId));
 
-        // Find the latest assignment history record
-        AssignmentHistory latestHistory = assignmentHistoryRepository.findByAssetAssetIdOrderByAssignmentDateDesc(assetId)
-                .stream()
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No assignment history found for asset: " + assetId));
-
-        // Update asset status and clear assignment
         asset.setStatus(newStatus);
         asset.setCurrentEmployee(null);
         asset.setLastAssignmentDate(null);
-        asset.setUpdatedAt(java.time.LocalDateTime.now());
 
-        // Update assignment history
-        latestHistory.setReturnDate(new java.sql.Timestamp(System.currentTimeMillis()));
+        AssignmentHistory latestHistory = assignmentHistoryRepository.findByAssetAssetIdOrderByAssignmentDateDesc(assetId)
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("No assignment history found for asset: " + assetId));
+
+        latestHistory.setReturnDate(Instant.now());
         latestHistory.setReturnedByUser(returningUser);
 
-        // Save changes
-        hardwareAssetRepository.save(asset);
         assignmentHistoryRepository.save(latestHistory);
-
-        return convertToDto(asset);
+        HardwareAsset updatedAsset = hardwareAssetRepository.save(asset);
+        return convertToDto(updatedAsset);
     }
 
     @Transactional(readOnly = true)
@@ -219,28 +200,15 @@ public class HardwareAssetService {
         dto.setAssetId(history.getAsset().getAssetId());
         dto.setEmployeeId(history.getEmployee().getEmployeeId());
         dto.setEmployeeName(history.getEmployee().getFullName());
-        
-        if (history.getAssignedByUser() != null) {
-            dto.setAssignedByUserId(history.getAssignedByUser().getUserId());
-            dto.setAssignedByUsername(history.getAssignedByUser().getUsername());
-        }
-        
-        dto.setAssignmentDate(history.getAssignmentDate() != null ? 
-                history.getAssignmentDate().toInstant() : null);
-        dto.setReturnDate(history.getReturnDate() != null ? 
-                history.getReturnDate().toInstant() : null);
-        
-        if (history.getReturnedByUser() != null) {
-            dto.setReturnedByUserId(history.getReturnedByUser().getUserId());
-            dto.setReturnedByUsername(history.getReturnedByUser().getUsername());
-        }
-        
+        dto.setAssignedByUserId(history.getAssignedByUser() != null ? history.getAssignedByUser().getUserId() : null);
+        dto.setAssignedByUsername(history.getAssignedByUser() != null ? history.getAssignedByUser().getUsername() : null);
+        dto.setAssignmentDate(history.getAssignmentDate());
+        dto.setReturnDate(history.getReturnDate());
+        dto.setReturnedByUserId(history.getReturnedByUser() != null ? history.getReturnedByUser().getUserId() : null);
+        dto.setReturnedByUsername(history.getReturnedByUser() != null ? history.getReturnedByUser().getUsername() : null);
         dto.setNotes(history.getNotes());
-        dto.setCreatedAt(history.getCreatedAt() != null ? 
-                history.getCreatedAt().toInstant() : null);
-        dto.setUpdatedAt(history.getUpdatedAt() != null ? 
-                history.getUpdatedAt().toInstant() : null);
-        
+        dto.setCreatedAt(history.getCreatedAt());
+        dto.setUpdatedAt(history.getUpdatedAt());
         return dto;
     }
 } 
