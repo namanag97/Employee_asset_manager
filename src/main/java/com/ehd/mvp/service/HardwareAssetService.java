@@ -18,8 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -84,8 +83,7 @@ public class HardwareAssetService {
         asset.setSpecifications(request.getSpecifications());
         asset.setStatus(request.getStatus());
         asset.setNotes(request.getNotes());
-        asset.setCreatedAt(LocalDateTime.now());
-        asset.setUpdatedAt(LocalDateTime.now());
+        // createdAt and updatedAt will be set automatically by @CreationTimestamp and @UpdateTimestamp
 
         HardwareAsset savedAsset = hardwareAssetRepository.save(asset);
         return convertToDto(savedAsset);
@@ -107,7 +105,7 @@ public class HardwareAssetService {
         asset.setSpecifications(request.getSpecifications());
         asset.setStatus(request.getStatus());
         asset.setNotes(request.getNotes());
-        asset.setUpdatedAt(LocalDateTime.now());
+        // updatedAt will be set automatically by @UpdateTimestamp
 
         HardwareAsset updatedAsset = hardwareAssetRepository.save(asset);
         return convertToDto(updatedAsset);
@@ -118,6 +116,11 @@ public class HardwareAssetService {
         HardwareAsset asset = hardwareAssetRepository.findById(assetId)
                 .orElseThrow(() -> new EntityNotFoundException("Hardware asset not found with id: " + assetId));
 
+        // Check if asset is available for assignment
+        if (!"Available".equals(asset.getStatus())) {
+            throw new IllegalStateException("Asset is not available for assignment. Current status: " + asset.getStatus());
+        }
+
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new EntityNotFoundException("Employee not found with id: " + employeeId));
 
@@ -125,17 +128,18 @@ public class HardwareAssetService {
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + assigningUserId));
 
         // Update asset status and assignment
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         asset.setStatus("Assigned");
         asset.setCurrentEmployee(employee);
-        asset.setLastAssignmentDate(Timestamp.valueOf(now));
-        asset.setUpdatedAt(now);
+        asset.setLastAssignmentDate(now);
+        // updatedAt will be set automatically by @UpdateTimestamp
 
         AssignmentHistory history = new AssignmentHistory();
         history.setAsset(asset);
         history.setEmployee(employee);
         history.setAssignedByUser(assigningUser);
-        history.setAssignmentDate(Timestamp.valueOf(now));
+        history.setAssignmentDate(now);
+        // createdAt and updatedAt will be set automatically by @CreationTimestamp and @UpdateTimestamp
 
         assignmentHistoryRepository.save(history);
         HardwareAsset updatedAsset = hardwareAssetRepository.save(asset);
@@ -150,25 +154,22 @@ public class HardwareAssetService {
         AppUser returningUser = appUserRepository.findById(returningUserId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + returningUserId));
 
-        asset.setStatus(newStatus);
-        asset.setCurrentEmployee(null);
-        asset.setLastAssignmentDate(null);
-
         AssignmentHistory latestHistory = assignmentHistoryRepository.findByAssetAssetIdOrderByAssignmentDateDesc(assetId)
                 .stream()
                 .findFirst()
                 .orElseThrow(() -> new EntityNotFoundException("No assignment history found for asset: " + assetId));
 
         // Update asset status and clear assignment
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         asset.setStatus(newStatus);
         asset.setCurrentEmployee(null);
         asset.setLastAssignmentDate(null);
-        asset.setUpdatedAt(now);
+        // updatedAt will be set automatically by @UpdateTimestamp
 
         // Update assignment history
-        latestHistory.setReturnDate(Timestamp.valueOf(now));
+        latestHistory.setReturnDate(now);
         latestHistory.setReturnedByUser(returningUser);
+        // updatedAt will be set automatically by @UpdateTimestamp
 
         assignmentHistoryRepository.save(latestHistory);
         HardwareAsset updatedAsset = hardwareAssetRepository.save(asset);
@@ -196,7 +197,7 @@ public class HardwareAssetService {
         dto.setAssetId(asset.getAssetId());
         dto.setAssetTag(asset.getAssetTag());
         dto.setSerialNumber(asset.getSerialNumber());
-        dto.setTypeId(asset.getHardwareType().getTypeId());
+        dto.setTypeId(asset.getHardwareType() != null ? asset.getHardwareType().getTypeId() : null);
         dto.setMake(asset.getMake());
         dto.setModel(asset.getModel());
         dto.setSpecifications(asset.getSpecifications());

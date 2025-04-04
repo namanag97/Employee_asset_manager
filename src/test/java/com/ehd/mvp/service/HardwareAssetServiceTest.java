@@ -42,10 +42,19 @@ class HardwareAssetServiceTest {
     @BeforeEach
     void setUp() {
         // Create test data
+        HardwareType hardwareType = new HardwareType();
+        hardwareType.setTypeId(1);
+        hardwareType.setTypeName("Laptop");
+        
         availableAsset = new HardwareAsset();
         availableAsset.setAssetId(1L);
         availableAsset.setStatus("Available");
         availableAsset.setUpdatedAt(Instant.now());
+        availableAsset.setHardwareType(hardwareType);
+        availableAsset.setAssetTag("LAP001");
+        availableAsset.setSerialNumber("SN123456");
+        availableAsset.setMake("Dell");
+        availableAsset.setModel("XPS 13");
 
         employee = new Employee();
         employee.setEmployeeId("EMP001");

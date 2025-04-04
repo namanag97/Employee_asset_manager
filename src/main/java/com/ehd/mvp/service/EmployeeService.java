@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,8 +39,7 @@ public class EmployeeService {
         employee.setFullName(request.getFullName());
         employee.setEmail(request.getEmail());
         employee.setStatus(request.getStatus());
-        employee.setCreatedAt(LocalDateTime.now());
-        employee.setUpdatedAt(LocalDateTime.now());
+        // createdAt and updatedAt will be set automatically by @CreationTimestamp and @UpdateTimestamp
         
         Employee savedEmployee = employeeRepository.save(employee);
         return convertToDto(savedEmployee);
@@ -54,7 +53,7 @@ public class EmployeeService {
         employee.setFullName(request.getFullName());
         employee.setEmail(request.getEmail());
         employee.setStatus(request.getStatus());
-        employee.setUpdatedAt(LocalDateTime.now());
+        // updatedAt will be set automatically by @UpdateTimestamp
 
         Employee updatedEmployee = employeeRepository.save(employee);
         return convertToDto(updatedEmployee);

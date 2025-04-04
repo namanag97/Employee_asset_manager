@@ -1,8 +1,7 @@
 package com.ehd.mvp.dto;
 
 import lombok.Data;
-import java.time.LocalDateTime;
-import java.sql.Timestamp;
+import java.time.Instant;
 
 @Data
 public class AssignmentHistoryDto {
@@ -12,11 +11,11 @@ public class AssignmentHistoryDto {
     private String employeeName;
     private Long assignedByUserId;
     private String assignedByUsername;
-    private Timestamp assignmentDate;
-    private Timestamp returnDate;
+    private Instant assignmentDate;
+    private Instant returnDate;
     private Long returnedByUserId;
     private String returnedByUsername;
     private String notes;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private Instant createdAt;
+    private Instant updatedAt;
 } 

@@ -1,7 +1,7 @@
 package com.ehd.mvp.dto;
 
 import lombok.Data;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Data
 public class EmployeeDto {
@@ -9,6 +9,6 @@ public class EmployeeDto {
     private String fullName;
     private String email;
     private String status;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private Instant createdAt;
+    private Instant updatedAt;
 } 

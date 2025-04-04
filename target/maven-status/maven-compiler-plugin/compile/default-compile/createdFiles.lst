@@ -33,3 +33,4 @@ com/ehd/mvp/service/HardwareAssetService.class
 com/ehd/mvp/entity/AppUser.class
 com/ehd/mvp/entity/Employee.class
 com/ehd/mvp/repository/EmployeeRepository.class
+com/ehd/mvp/entity/ReleaseNote.class
