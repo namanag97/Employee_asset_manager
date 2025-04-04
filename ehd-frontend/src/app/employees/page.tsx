@@ -1,8 +1,6 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import AppLayout from '@/components/layout/AppLayout';
-import EmployeeTable from '@/components/employees/EmployeeTable';
 import { fetchEmployees } from '@/lib/api/employees';
 
 export default function EmployeesPage() {
@@ -12,10 +10,10 @@ export default function EmployeesPage() {
   });
 
   return (
-    <AppLayout>
+    <>
       <div className="sm:flex sm:items-center">
         <div className="sm:flex-auto">
-          <h1 className="text-2xl font-semibold text-gray-900">Employees</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Employees List</h1>
           <p className="mt-2 text-sm text-gray-700">
             A list of all employees in the system.
           </p>
@@ -39,8 +37,11 @@ export default function EmployeesPage() {
           </div>
         </div>
       ) : employees ? (
-        <EmployeeTable employees={employees} />
+        <div className="mt-8">
+          {/* Employee list will go here */}
+          <p className="text-gray-500">Employee list coming soon...</p>
+        </div>
       ) : null}
-    </AppLayout>
+    </>
   );
 } 

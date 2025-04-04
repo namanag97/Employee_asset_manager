@@ -1,4 +1,6 @@
 // Hardware Asset Types
+export type HardwareStatus = 'Available' | 'Assigned' | 'Maintenance' | 'Retired';
+
 export interface HardwareAsset {
   assetId: number;
   assetTag: string;
@@ -7,7 +9,7 @@ export interface HardwareAsset {
   make: string;
   model: string;
   specifications?: string;
-  status: string;
+  status: HardwareStatus;
   notes?: string;
   currentEmployeeId?: string;
   lastAssignmentDate?: string;
@@ -63,6 +65,13 @@ export interface AssignmentHistory {
   notes?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface AssetHistory extends AssignmentHistory {
+  status: HardwareStatus;
+  action: 'ASSIGN' | 'RETURN' | 'UPDATE';
+  previousStatus?: HardwareStatus;
+  newStatus?: HardwareStatus;
 }
 
 // API Response Types

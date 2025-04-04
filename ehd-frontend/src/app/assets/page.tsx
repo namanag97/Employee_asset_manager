@@ -1,7 +1,6 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import AppLayout from '@/components/layout/AppLayout';
 import AssetTable from '@/components/assets/AssetTable';
 import { fetchAssets } from '@/lib/api/assets';
 
@@ -12,7 +11,7 @@ export default function AssetsPage() {
   });
 
   return (
-    <AppLayout>
+    <>
       <div className="sm:flex sm:items-center">
         <div className="sm:flex-auto">
           <h1 className="text-2xl font-semibold text-gray-900">Hardware Assets</h1>
@@ -41,6 +40,6 @@ export default function AssetsPage() {
       ) : assets ? (
         <AssetTable assets={assets} />
       ) : null}
-    </AppLayout>
+    </>
   );
 } 
